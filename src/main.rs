@@ -4,23 +4,28 @@ use std::fs;
 fn main() {
     let file_name = &env::args().collect::<Vec<String>>()[1];
 
-    let content = fs::read_to_string(file_name).expect("Failed to read file");
+    let data = fs::read_to_string(file_name).expect("Failed to read file");
 
-    let dict = create_dict(&content);
-    let content = create_content(&content, &dict);
+    let mut created_file_name =
+        file_name[..file_name.rfind(".").expect("Failed to find period")].to_string();
+    created_file_name.push_str(".bgn");
 
-    let mut file = &file_name[..file_name.rfind(".").expect("Failed to find period")];
+    let dict = create_dict(&data);
+    let content = create_content(data, &dict);
 
-    println!("{:?}", file);
+    let mut full_content = String::from("[");
+    full_content.push_str(dict.join(",").as_str());
+    full_content.push_str("]\n\n");
+    full_content.push_str(content.as_str());
 
-    fs::write(file, content);
+    fs::write(created_file_name, full_content).expect("Failed to write to file");
 }
 
-fn create_dict(content: &String) -> Vec<String> {
+fn create_dict(data: &String) -> Vec<String> {
     let mut dict = Vec::new();
     let mut word = String::new();
 
-    for char in content.chars() {
+    for char in data.chars() {
         if char.is_alphanumeric() {
             word.push(char);
         } else {
@@ -37,11 +42,11 @@ fn create_dict(content: &String) -> Vec<String> {
     dict
 }
 
-fn create_content(content: &String, dict: &Vec<String>) -> String {
+fn create_content(data: String, dict: &Vec<String>) -> String {
     let mut compressed_content = String::new();
     let mut word = String::new();
 
-    for char in content.chars() {
+    for char in data.chars() {
         if char.is_alphanumeric() {
             word.push(char);
         } else {
