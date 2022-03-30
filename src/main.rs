@@ -1,35 +1,40 @@
 use std::env;
+use std::ffi::OsStr;
 use std::fs;
+use std::path::Path;
 
 fn main() {
     let file_name = &env::args().collect::<Vec<String>>()[1];
 
-    let data = fs::read_to_string(file_name).expect("Failed to read file");
+    match Path::new(file_name).extension().and_then(OsStr::to_str) {
+        // Some("bgn") => decompress(file_name),
+        _ => compress(file_name),
+    }
+}
 
-    let mut created_file_name =
-        file_name[..file_name.rfind(".").expect("Failed to find period")].to_string();
-    created_file_name.push_str(".bgn");
+fn compress(file_name: &String) {
+    let data = fs::read_to_string(file_name).expect("Failed to read file");
 
     let dict = create_dict(&data);
     let content = create_content(data, &dict);
 
-    let mut full_content = String::from("[");
-    full_content.push_str(dict.join(",").as_str());
-    full_content.push_str("]\n\n");
-    full_content.push_str(content.as_str());
+    let final_name = [&file_name[..file_name.rfind(".").unwrap()], "bgn"].join(".");
+    let full_content = [dict.join(","), content].join("\n");
 
-    fs::write(created_file_name, full_content).expect("Failed to write to file");
+    fs::write(final_name, full_content).expect("Failed to write to file");
 }
 
 fn create_dict(data: &String) -> Vec<String> {
+    const NEW_STRING: String = String::new();
+
     let mut dict = Vec::new();
     let mut word = String::new();
 
     for char in data.chars() {
-        if char.is_alphanumeric() {
+        if char.is_alphabetic() {
             word.push(char);
         } else {
-            if !(word == String::new()) {
+            if !(word == NEW_STRING) {
                 if !(dict.contains(&word)) {
                     dict.push(word.clone());
                 }
@@ -43,27 +48,27 @@ fn create_dict(data: &String) -> Vec<String> {
 }
 
 fn create_content(data: String, dict: &Vec<String>) -> String {
-    let mut compressed_content = String::new();
+    let mut content = String::new();
     let mut word = String::new();
 
     for char in data.chars() {
-        if char.is_alphanumeric() {
+        if char.is_alphabetic() {
             word.push(char);
         } else {
             if !(word == String::new()) {
                 let pos = dict
                     .iter()
-                    .position(|x| x == &word)
-                    .expect("Failed to find word in dict");
+                    .position(|dict_word| dict_word == &word)
+                    .unwrap();
 
-                compressed_content.push_str(pos.to_string().as_str());
+                content.push_str(pos.to_string().as_str());
 
                 word = String::new();
             }
 
-            compressed_content.push(char);
+            content.push(char);
         }
     }
 
-    compressed_content
+    content
 }
