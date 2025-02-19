@@ -1,4 +1,10 @@
 var name "nate"
-var age 19
-
 print name
+
+loop i 0 5
+    print i
+
+    loop j 0 5
+        print j
+    
+    print name

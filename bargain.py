@@ -9,23 +9,51 @@ if path.split(".")[-1] != "brg":
 with open(path) as file:
     lines = file.read().splitlines()
 
-variables = {}
+blocks = []
+current = blocks
+indentation = 0
 
 for line in lines:
-    if not line:
+    strip = line.strip()
+
+    if not strip:
         continue
 
-    split = line.split()
+    i = len(line) - len(strip)
 
-    match split[0]:
-        case "var":
-            value = split[2]
+    if i > indentation:
+        blocks[-1].append(strip)
+    else:
+        blocks.append([strip])
 
-            if value.isdigit():
-                value = int(value)
-            else:
-                value = value[1:-1]
+    indentation = i
 
-            variables[split[1]] = value
-        case "print":
-            print(variables[split[1]])
+
+print(blocks)
+
+# variables = {}
+
+
+# def evaluate(value):
+#     if value.isdigit() or value.startswith('"'):
+#         return value
+#     else:
+#         return variables[value]
+
+
+# for line in lines:
+#     if not line:
+#         continue
+
+#     split = line.split()
+
+#     match split[0]:
+#         case "var":
+#             value = split[2]
+
+#             # if value.isdigit():
+#             #     value = int(value)
+
+#             variables[split[1]] = value
+#         case "print":
+#             print(evaluate(split[1]))
